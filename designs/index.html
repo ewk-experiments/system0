@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System 0 — Design System & Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #fafbfe;
+  --bg-secondary: #f2f4f9;
+  --bg-white: #ffffff;
+  --bg-dark: #0c0e1a;
+  --blue-50: #eef2ff;
+  --blue-100: #dce5ff;
+  --blue-200: #b8c9ff;
+  --blue-400: #6b8aff;
+  --blue-500: #4d6fff;
+  --blue-600: #3b5bdb;
+  --blue-700: #2b44b0;
+  --purple-50: #f5f0ff;
+  --purple-100: #e8dcff;
+  --purple-400: #9775fa;
+  --purple-500: #7c5ce7;
+  --purple-600: #6741d9;
+  --gradient-main: linear-gradient(135deg, #4d6fff 0%, #7c5ce7 50%, #9775fa 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(77,111,255,0.08) 0%, rgba(124,92,231,0.08) 100%);
+  --gradient-card: linear-gradient(135deg, rgba(77,111,255,0.04) 0%, rgba(124,92,231,0.04) 100%);
+  --text-primary: #1a1d2e;
+  --text-secondary: #5c6178;
+  --text-tertiary: #8f93a8;
+  --text-on-gradient: #ffffff;
+  --border-light: #e5e8f0;
+  --border-subtle: #edf0f5;
+  --focus-blue: rgba(77,111,255,0.15);
+  --focus-green: rgba(52,199,89,0.15);
+  --scatter-yellow: rgba(255,189,46,0.15);
+  --overload-red: rgba(255,82,82,0.15);
+  --state-focus: #4d6fff;
+  --state-flow: #34c759;
+  --state-scatter: #ffbd2e;
+  --state-overload: #ff5252;
+  --state-idle: #c8ccd8;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-sans); background: #e8ecf4; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+
+.screen-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(250,251,254,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-light); padding: 12px 24px; display: flex; gap: 8px; overflow-x: auto; }
+.screen-nav a { color: var(--text-tertiary); text-decoration: none; font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--radius-pill); white-space: nowrap; transition: all 0.2s; }
+.screen-nav a:hover, .screen-nav a.active { color: var(--blue-600); background: var(--blue-50); }
+
+.screen { min-height: 100vh; padding: 80px 0 40px; display: flex; flex-direction: column; align-items: center; }
+.screen-label { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 16px; }
+
+.desktop { width: 1280px; max-width: 95vw; height: 800px; background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-lg); }
+
+.phone { width: 390px; height: 844px; background: var(--bg-primary); border-radius: 44px; border: 2px solid var(--border-light); overflow: hidden; position: relative; box-shadow: var(--shadow-lg); }
+.phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 160px; height: 34px; background: #000; border-radius: 0 0 20px 20px; z-index: 10; }
+.phone-content { height: 100%; overflow-y: auto; }
+.phone-content::-webkit-scrollbar { display: none; }
+
+/* Buttons */
+.btn-gradient { display: inline-flex; align-items: center; gap: 8px; padding: 14px 36px; background: var(--gradient-main); color: white; font-weight: 600; font-size: 15px; border: none; border-radius: var(--radius-pill); cursor: pointer; box-shadow: 0 4px 16px rgba(77,111,255,0.3); transition: all 0.3s; }
+.btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(77,111,255,0.4); }
+.btn-outline { display: inline-flex; padding: 12px 28px; background: transparent; color: var(--text-secondary); font-weight: 500; font-size: 14px; border: 1px solid var(--border-light); border-radius: var(--radius-pill); cursor: pointer; }
+.btn-white { display: inline-flex; padding: 14px 36px; background: white; color: var(--blue-600); font-weight: 600; font-size: 15px; border: none; border-radius: var(--radius-pill); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+/* ===== LANDING ===== */
+.s0-landing { height: 100%; display: flex; flex-direction: column; background: var(--bg-white); }
+.s0-landing-nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; }
+.s0-logo { font-size: 20px; font-weight: 700; }
+.s0-logo span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.s0-nav-links { display: flex; gap: 28px; align-items: center; }
+.s0-nav-links a { font-size: 14px; color: var(--text-secondary); text-decoration: none; }
+
+.s0-hero { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 48px; }
+.s0-hero .content { max-width: 640px; }
+.s0-hero h1 { font-size: 56px; font-weight: 300; line-height: 1.15; margin-bottom: 20px; color: var(--text-primary); }
+.s0-hero h1 strong { font-weight: 700; }
+.s0-hero p { font-size: 18px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 36px; }
+.s0-hero .cta-row { display: flex; gap: 16px; justify-content: center; }
+
+/* Feature sections */
+.s0-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-light); border-top: 1px solid var(--border-light); }
+.s0-feature { background: var(--bg-white); padding: 32px 28px; }
+.s0-feature .icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+.s0-feature .icon.blue { background: var(--blue-50); }
+.s0-feature .icon.purple { background: var(--purple-50); }
+.s0-feature .icon.green { background: rgba(52,199,89,0.1); }
+.s0-feature .icon.orange { background: rgba(255,149,0,0.1); }
+.s0-feature h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.s0-feature p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+/* ===== DASHBOARD ===== */
+.s0-dash { display: grid; grid-template-columns: 240px 1fr; height: 100%; }
+.s0-sidebar { background: var(--bg-white); border-right: 1px solid var(--border-light); padding: 24px 16px; display: flex; flex-direction: column; }
+.s0-sidebar .logo { padding: 0 8px; margin-bottom: 28px; font-size: 18px; font-weight: 700; }
+.s0-sidebar .logo span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.s0-sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+.s0-sidebar nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.15s; }
+.s0-sidebar nav a:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.s0-sidebar nav a.active { background: var(--gradient-subtle); color: var(--blue-600); }
+
+.s0-main { padding: 28px 32px; overflow-y: auto; background: var(--bg-primary); }
+.s0-main h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.s0-main .subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; }
+
+/* Cognitive state timeline */
+.timeline-card { background: var(--bg-white); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-card); }
+.timeline-card .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.timeline-card .header h3 { font-size: 15px; font-weight: 600; }
+.state-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 600; }
+.state-badge.focus { background: var(--focus-blue); color: var(--state-focus); }
+.state-badge.flow { background: var(--focus-green); color: var(--state-flow); }
+.state-badge.scatter { background: var(--scatter-yellow); color: #b8860b; }
+.state-badge.overload { background: var(--overload-red); color: var(--state-overload); }
+.state-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+/* Timeline bar */
+.timeline-bar { display: flex; height: 32px; border-radius: var(--radius-sm); overflow: hidden; gap: 2px; }
+.timeline-bar .segment { border-radius: 4px; }
+.timeline-bar .s-focus { background: var(--state-focus); }
+.timeline-bar .s-flow { background: var(--state-flow); }
+.timeline-bar .s-scatter { background: var(--state-scatter); }
+.timeline-bar .s-overload { background: var(--state-overload); }
+.timeline-bar .s-idle { background: var(--state-idle); }
+.timeline-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-tertiary); }
+
+/* Intervention list */
+.intervention-list { display: flex; flex-direction: column; gap: 12px; }
+.intervention { display: flex; gap: 14px; padding: 14px; background: var(--bg-white); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.intervention .time { font-size: 12px; font-weight: 500; font-family: var(--font-mono); color: var(--text-tertiary); white-space: nowrap; min-width: 60px; }
+.intervention .desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.intervention .type-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.intervention .type-dot.noise { background: var(--state-focus); }
+.intervention .type-dot.complexity { background: var(--state-overload); }
+.intervention .type-dot.friction { background: var(--state-scatter); }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card { background: var(--bg-white); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-card); }
+.stat-card .value { font-size: 32px; font-weight: 800; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-card .label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.stat-card .trend { font-size: 12px; color: var(--state-flow); margin-top: 6px; font-weight: 500; }
+
+/* Weekly pattern bars */
+.weekly-bars { display: flex; gap: 8px; align-items: flex-end; height: 120px; padding: 0 8px; }
+.weekly-bar { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.weekly-bar .bar-segment { border-radius: 3px; width: 100%; }
+.weekly-bar .day { text-align: center; font-size: 11px; color: var(--text-tertiary); margin-top: 8px; }
+
+/* Insight cards */
+.insight { padding: 16px; background: var(--gradient-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+.insight strong { color: var(--text-primary); }
+
+/* Extension popup */
+.ext-popup { width: 320px; background: var(--bg-white); border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-lg); overflow: hidden; }
+.ext-popup-header { padding: 20px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 12px; }
+.ext-popup .state-indicator { display: flex; align-items: center; gap: 8px; }
+.ext-popup .state-indicator .dot-lg { width: 12px; height: 12px; border-radius: 50%; }
+.ext-popup .state-indicator .label { font-size: 15px; font-weight: 600; }
+.ext-popup .state-indicator .duration { font-size: 12px; color: var(--text-tertiary); }
+.ext-popup-body { padding: 16px 20px; }
+.ext-popup-body .summary { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+.ext-popup-controls { display: flex; flex-direction: column; gap: 8px; }
+.ext-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+.ext-toggle .label { font-size: 14px; }
+.toggle-switch { width: 44px; height: 24px; background: var(--border-light); border-radius: 12px; position: relative; cursor: pointer; }
+.toggle-switch.on { background: var(--gradient-main); }
+.toggle-switch .knob { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: var(--shadow-sm); transition: all 0.2s; }
+.toggle-switch.on .knob { left: 22px; }
+.ext-popup-footer { padding: 12px 20px; border-top: 1px solid var(--border-subtle); display: flex; gap: 12px; }
+.ext-popup-footer a { font-size: 13px; color: var(--blue-500); text-decoration: none; font-weight: 500; }
+
+/* Calibration */
+.calibration { padding: 52px 24px 24px; height: 100%; display: flex; flex-direction: column; }
+.progress-steps { display: flex; gap: 4px; margin-bottom: 32px; }
+.progress-steps .step { flex: 1; height: 4px; border-radius: 2px; background: var(--border-light); }
+.progress-steps .step.active { background: var(--gradient-main); }
+.progress-steps .step.done { background: var(--blue-400); }
+.calibration h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+.calibration .sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+
+.work-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.work-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg-white); border: 2px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; }
+.work-card.selected { border-color: var(--blue-500); background: var(--blue-50); }
+.work-card .emoji { font-size: 20px; }
+.work-card .text { font-size: 14px; font-weight: 500; }
+.work-card .desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+/* Slider */
+.slider-group { margin-bottom: 24px; }
+.slider-group .label { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.slider-track { height: 8px; background: var(--border-light); border-radius: 4px; position: relative; }
+.slider-fill { position: absolute; height: 100%; background: var(--gradient-main); border-radius: 4px; }
+.slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: white; border: 2px solid var(--blue-500); border-radius: 50%; box-shadow: var(--shadow-sm); }
+.slider-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-tertiary); }
+
+/* Pricing */
+.s0-pricing { padding: 52px 24px 24px; height: 100%; display: flex; flex-direction: column; }
+.s0-pricing h2 { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+.s0-pricing .sub { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 28px; }
+.price-card { background: var(--bg-white); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 16px; }
+.price-card.featured { border: 2px solid var(--blue-500); position: relative; }
+.price-card.featured::before { content: 'SAVE 17%'; position: absolute; top: -10px; right: 20px; padding: 4px 10px; background: var(--gradient-main); color: white; font-size: 10px; font-weight: 700; border-radius: var(--radius-pill); }
+.price-card .name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.price-card .price { font-size: 36px; font-weight: 800; }
+.price-card .price span { font-size: 14px; font-weight: 400; color: var(--text-secondary); }
+.price-card .period { font-size: 12px; color: var(--text-tertiary); margin-bottom: 16px; }
+.price-card .features { list-style: none; margin-bottom: 20px; }
+.price-card .features li { padding: 5px 0; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.price-card .features li::before { content: '✓'; color: var(--blue-500); font-weight: 700; }
+
+/* Cognitive Profile */
+.cog-profile { padding: 28px 32px; overflow-y: auto; }
+.cog-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.cog-header h1 { font-size: 24px; font-weight: 700; }
+.cog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.cog-card { background: var(--bg-white); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-card); }
+.cog-card .metric-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 8px; }
+.cog-card .metric-value { font-size: 28px; font-weight: 800; }
+.cog-card .metric-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+.radial-chart { width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--state-focus) 0% 40%, var(--state-flow) 40% 55%, var(--state-scatter) 55% 75%, var(--state-overload) 75% 82%, var(--state-idle) 82% 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.radial-chart .inner { width: 70px; height: 70px; border-radius: 50%; background: var(--bg-white); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+</style>
+</head>
+<body>
+<nav class="screen-nav">
+  <a href="#landing" class="active">Landing</a>
+  <a href="#calibration">Calibration</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#cognitive">Cognitive Profile</a>
+  <a href="#popup">Extension Popup</a>
+  <a href="#pricing">Pricing</a>
+</nav>
+
+<!-- ===== LANDING ===== -->
+<section class="screen" id="landing">
+  <div class="screen-label">Landing Page — Desktop</div>
+  <div class="desktop">
+    <div class="s0-landing">
+      <nav class="s0-landing-nav">
+        <div class="s0-logo">System <span>0</span></div>
+        <div class="s0-nav-links">
+          <a href="#">How it Works</a>
+          <a href="#">Pricing</a>
+          <a href="#">Privacy</a>
+          <a href="#" style="color:var(--text-primary);font-weight:500">Log in</a>
+          <button class="btn-gradient" style="padding:10px 24px;font-size:14px">Install Extension</button>
+        </div>
+      </nav>
+      <div class="s0-hero">
+        <div class="content">
+          <h1>The <strong>best interface</strong> is no interface.</h1>
+          <p>System 0 is an ambient AI layer that reshapes your information environment based on how you think. It watches your cognitive state and removes noise, adds productive friction, and adjusts complexity — all invisibly.</p>
+          <div class="cta-row">
+            <button class="btn-gradient" style="padding:16px 40px;font-size:16px">Install Extension →</button>
+            <button class="btn-outline" style="padding:14px 32px">Learn More</button>
+          </div>
+        </div>
+      </div>
+      <div class="s0-features">
+        <div class="s0-feature">
+          <div class="icon blue">👁</div>
+          <h3>It watches how you think.</h3>
+          <p>Passively monitors reading speed, tab switching, scroll patterns, and time-of-day rhythms to understand your cognitive state.</p>
+        </div>
+        <div class="s0-feature">
+          <div class="icon purple">🧹</div>
+          <h3>It removes the noise.</h3>
+          <p>When you're deep in focus, distracting elements fade. Sidebars collapse. Recommendations disappear.</p>
+        </div>
+        <div class="s0-feature">
+          <div class="icon orange">⚡</div>
+          <h3>It adds productive friction.</h3>
+          <p>Stuck in a thinking rut? System 0 introduces contrarian information to break the loop.</p>
+        </div>
+        <div class="s0-feature">
+          <div class="icon green">📊</div>
+          <h3>It adjusts complexity.</h3>
+          <p>Overloaded? Content simplifies. In flow? Complexity increases. Your environment adapts to you.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CALIBRATION ===== -->
+<section class="screen" id="calibration">
+  <div class="screen-label">Calibration — Work Style</div>
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-content">
+      <div class="calibration">
+        <div class="progress-steps">
+          <div class="step active"></div>
+          <div class="step"></div>
+          <div class="step"></div>
+          <div class="step"></div>
+        </div>
+        <h2>Tell us how you work.</h2>
+        <div class="sub">Select all that apply. This helps System 0 understand your patterns.</div>
+        <div class="work-cards">
+          <div class="work-card selected">
+            <div class="emoji">🔬</div>
+            <div><div class="text">Deep Research</div><div class="desc">Long articles, papers, documentation</div></div>
+          </div>
+          <div class="work-card selected">
+            <div class="emoji">✍️</div>
+            <div><div class="text">Writing & Creation</div><div class="desc">Articles, code, design, content</div></div>
+          </div>
+          <div class="work-card">
+            <div class="emoji">📊</div>
+            <div><div class="text">Analysis & Data</div><div class="desc">Spreadsheets, dashboards, analytics</div></div>
+          </div>
+          <div class="work-card">
+            <div class="emoji">💬</div>
+            <div><div class="text">Communication</div><div class="desc">Email, Slack, meetings</div></div>
+          </div>
+          <div class="work-card">
+            <div class="emoji">🧭</div>
+            <div><div class="text">Exploration</div><div class="desc">Browse widely, follow rabbit holes</div></div>
+          </div>
+        </div>
+        <div style="margin-top:auto">
+          <button class="btn-gradient" style="width:100%;justify-content:center;padding:14px">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:32px"></div>
+
+  <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;margin-top:32px">
+    <div>
+      <div class="screen-label" style="text-align:center">Tolerance Sliders</div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="calibration">
+            <div class="progress-steps">
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+            </div>
+            <h2>How much should we intervene?</h2>
+            <div class="sub">You can always adjust these later.</div>
+
+            <div class="slider-group">
+              <div class="label">Noise Reduction</div>
+              <div class="slider-track">
+                <div class="slider-fill" style="width:60%"></div>
+                <div class="slider-thumb" style="left:60%"></div>
+              </div>
+              <div class="slider-labels"><span>Low</span><span>Aggressive</span></div>
+            </div>
+
+            <div class="slider-group">
+              <div class="label">Productive Friction</div>
+              <div class="slider-track">
+                <div class="slider-fill" style="width:45%"></div>
+                <div class="slider-thumb" style="left:45%"></div>
+              </div>
+              <div class="slider-labels"><span>Subtle</span><span>Challenging</span></div>
+            </div>
+
+            <div class="slider-group">
+              <div class="label">Complexity Adjustment</div>
+              <div class="slider-track">
+                <div class="slider-fill" style="width:70%"></div>
+                <div class="slider-thumb" style="left:70%"></div>
+              </div>
+              <div class="slider-labels"><span>Off</span><span>Adaptive</span></div>
+            </div>
+
+            <div style="margin-top:auto">
+              <button class="btn-gradient" style="width:100%;justify-content:center;padding:14px">Continue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DASHBOARD ===== -->
+<section class="screen" id="dashboard">
+  <div class="screen-label">Dashboard — Desktop</div>
+  <div class="desktop">
+    <div class="s0-dash">
+      <aside class="s0-sidebar">
+        <div class="logo">System <span>0</span></div>
+        <nav>
+          <a href="#" class="active">📊 Dashboard</a>
+          <a href="#">🧠 Cognitive Profile</a>
+          <a href="#">📋 Intervention Log</a>
+          <a href="#">📈 Insights</a>
+          <a href="#">⚙️ Settings</a>
+        </nav>
+        <div style="margin-top:auto;padding:16px;background:var(--gradient-subtle);border-radius:var(--radius-md)">
+          <div style="font-size:12px;font-weight:600;color:var(--blue-600);margin-bottom:4px">Trial: 12 days left</div>
+          <div style="font-size:12px;color:var(--text-tertiary)">Subscribe to keep ambient intelligence active</div>
+          <button class="btn-gradient" style="width:100%;padding:8px;font-size:12px;margin-top:10px;justify-content:center">Subscribe — $29/mo</button>
+        </div>
+      </aside>
+      <div class="s0-main">
+        <h1>Dashboard</h1>
+        <div class="subtitle">Saturday, March 14, 2026</div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="value">4.2h</div>
+            <div class="label">Focused today</div>
+            <div class="trend">↑ 18% from yesterday</div>
+          </div>
+          <div class="stat-card">
+            <div class="value">7</div>
+            <div class="label">Interventions today</div>
+            <div class="trend">3 noise · 2 complexity · 2 friction</div>
+          </div>
+          <div class="stat-card">
+            <div class="value">82</div>
+            <div class="label">Focus score</div>
+            <div class="trend">↑ 5 pts from last week</div>
+          </div>
+        </div>
+
+        <div class="timeline-card">
+          <div class="header">
+            <h3>Cognitive State Timeline</h3>
+            <div class="state-badge focus"><div class="dot"></div> Focused · 23 min</div>
+          </div>
+          <div class="timeline-bar">
+            <div class="segment s-idle" style="width:10%"></div>
+            <div class="segment s-focus" style="width:20%"></div>
+            <div class="segment s-flow" style="width:8%"></div>
+            <div class="segment s-focus" style="width:15%"></div>
+            <div class="segment s-scatter" style="width:12%"></div>
+            <div class="segment s-focus" style="width:18%"></div>
+            <div class="segment s-overload" style="width:5%"></div>
+            <div class="segment s-focus" style="width:12%"></div>
+          </div>
+          <div class="timeline-labels">
+            <span>8 AM</span><span>10 AM</span><span>12 PM</span><span>2 PM</span><span>4 PM</span><span>Now</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Today's Interventions</h3>
+            <div class="intervention-list">
+              <div class="intervention">
+                <div class="type-dot noise"></div>
+                <div class="time">10:14</div>
+                <div class="desc">Noise reduction on <strong>docs.google.com</strong> — Focus state detected, sidebar + suggestions faded</div>
+              </div>
+              <div class="intervention">
+                <div class="type-dot complexity"></div>
+                <div class="time">11:32</div>
+                <div class="desc">Complexity simplified on <strong>arxiv.org</strong> — Cognitive overload detected</div>
+              </div>
+              <div class="intervention">
+                <div class="type-dot friction"></div>
+                <div class="time">2:07</div>
+                <div class="desc">Contrarian article suggested — Same-topic reading for 90 min (thinking rut)</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Weekly Patterns</h3>
+            <div class="timeline-card" style="margin-bottom:12px">
+              <div class="weekly-bars">
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:10px"></div><div class="bar-segment s-scatter" style="height:15px"></div><div class="bar-segment s-focus" style="height:45px"></div><div class="bar-segment s-flow" style="height:20px"></div><div class="day">Mon</div></div>
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:8px"></div><div class="bar-segment s-scatter" style="height:10px"></div><div class="bar-segment s-focus" style="height:55px"></div><div class="bar-segment s-flow" style="height:25px"></div><div class="day">Tue</div></div>
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:15px"></div><div class="bar-segment s-overload" style="height:8px"></div><div class="bar-segment s-scatter" style="height:20px"></div><div class="bar-segment s-focus" style="height:35px"></div><div class="day">Wed</div></div>
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:5px"></div><div class="bar-segment s-scatter" style="height:12px"></div><div class="bar-segment s-focus" style="height:50px"></div><div class="bar-segment s-flow" style="height:30px"></div><div class="day">Thu</div></div>
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:20px"></div><div class="bar-segment s-scatter" style="height:25px"></div><div class="bar-segment s-focus" style="height:30px"></div><div class="day">Fri</div></div>
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:30px"></div><div class="bar-segment s-scatter" style="height:10px"></div><div class="bar-segment s-focus" style="height:15px"></div><div class="day">Sat</div></div>
+                <div class="weekly-bar"><div class="bar-segment s-idle" style="height:40px"></div><div class="bar-segment s-scatter" style="height:8px"></div><div class="day">Sun</div></div>
+              </div>
+            </div>
+            <div class="insight"><strong>Peak focus:</strong> 9-11 AM on Tuesdays and Thursdays. Average focus duration increased 12% this week.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COGNITIVE PROFILE ===== -->
+<section class="screen" id="cognitive">
+  <div class="screen-label">Cognitive Profile — Desktop</div>
+  <div class="desktop">
+    <div class="s0-dash">
+      <aside class="s0-sidebar">
+        <div class="logo">System <span>0</span></div>
+        <nav>
+          <a href="#">📊 Dashboard</a>
+          <a href="#" class="active">🧠 Cognitive Profile</a>
+          <a href="#">📋 Intervention Log</a>
+          <a href="#">📈 Insights</a>
+          <a href="#">⚙️ Settings</a>
+        </nav>
+      </aside>
+      <div class="cog-profile">
+        <div class="cog-header">
+          <h1>Cognitive Profile</h1>
+          <div class="state-badge focus"><div class="dot"></div> Currently Focused</div>
+        </div>
+
+        <div class="cog-grid">
+          <div class="cog-card">
+            <div class="metric-label">Focus Score (7-day avg)</div>
+            <div class="metric-value" style="background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent">82/100</div>
+            <div class="metric-sub">↑ 5 pts from last week</div>
+          </div>
+          <div class="cog-card">
+            <div class="metric-label">Avg Focus Duration</div>
+            <div class="metric-value" style="background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent">47 min</div>
+            <div class="metric-sub">↑ 8 min from last week</div>
+          </div>
+          <div class="cog-card">
+            <div class="metric-label">Flow Sessions This Week</div>
+            <div class="metric-value" style="background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent">12</div>
+            <div class="metric-sub">Avg 3.1 per day</div>
+          </div>
+          <div class="cog-card">
+            <div class="metric-label">Overload Events</div>
+            <div class="metric-value" style="color:var(--state-overload)">3</div>
+            <div class="metric-sub">↓ 2 from last week</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="timeline-card">
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">Cognitive State Distribution</h3>
+            <div class="radial-chart"><div class="inner">82</div></div>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:var(--state-focus)"></div> Focus 40%</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:var(--state-flow)"></div> Flow 15%</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:var(--state-scatter)"></div> Scattered 20%</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:var(--state-overload)"></div> Overload 7%</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div style="width:10px;height:10px;border-radius:50%;background:var(--state-idle)"></div> Idle 18%</div>
+            </div>
+          </div>
+          <div class="timeline-card">
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">Behavioral Insights</h3>
+            <div class="insight" style="margin-bottom:10px"><strong>Pattern detected:</strong> Your focus sessions after lunch are 35% shorter than morning sessions. Consider light reading after meals.</div>
+            <div class="insight" style="margin-bottom:10px"><strong>Intervention success:</strong> Noise reduction interventions maintained your focus 73% of the time this week.</div>
+            <div class="insight"><strong>Comparison:</strong> Your focus patterns are similar to research professionals — top 15% of System 0 users.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== EXTENSION POPUP ===== -->
+<section class="screen" id="popup">
+  <div class="screen-label">Extension Popup</div>
+  <div class="ext-popup">
+    <div class="ext-popup-header">
+      <div class="s0-logo" style="font-size:16px">System <span>0</span></div>
+    </div>
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border-subtle)">
+      <div class="state-indicator">
+        <div class="dot-lg" style="background:var(--state-focus)"></div>
+        <div>
+          <div class="label">Focused</div>
+          <div class="duration">for 23 minutes</div>
+        </div>
+      </div>
+    </div>
+    <div class="ext-popup-body">
+      <div class="summary">3 interventions today · 4.2 hrs focused</div>
+      <div class="ext-popup-controls">
+        <div class="ext-toggle">
+          <span class="label">Pause System 0</span>
+          <div class="toggle-switch"><div class="knob"></div></div>
+        </div>
+        <div class="ext-toggle">
+          <span class="label">Pause for 1 hour</span>
+          <div class="toggle-switch"><div class="knob"></div></div>
+        </div>
+        <div class="ext-toggle">
+          <span class="label" style="color:var(--text-tertiary)">Block this site</span>
+          <div class="toggle-switch"><div class="knob"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="ext-popup-footer">
+      <a href="#">Open Dashboard</a>
+      <a href="#">Settings</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section class="screen" id="pricing">
+  <div class="screen-label">Pricing — Mobile</div>
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-content">
+      <div class="s0-pricing">
+        <h2>Ambient intelligence.</h2>
+        <div class="sub">Your environment adapts to how you think.</div>
+
+        <div class="price-card">
+          <div class="name">Monthly</div>
+          <div class="price">$29<span>/month</span></div>
+          <div class="period">14-day free trial · No card required</div>
+          <ul class="features">
+            <li>Full ambient cognitive layer</li>
+            <li>Noise reduction</li>
+            <li>Complexity adjustment</li>
+            <li>Productive friction</li>
+            <li>Dashboard & insights</li>
+            <li>Desktop app integration</li>
+          </ul>
+          <button class="btn-gradient" style="width:100%;justify-content:center;padding:14px">Start Free Trial</button>
+        </div>
+
+        <div class="price-card featured">
+          <div class="name">Annual</div>
+          <div class="price">$24<span>/month</span></div>
+          <div class="period">$288/year · 14-day free trial</div>
+          <ul class="features">
+            <li>Everything in Monthly</li>
+            <li>Save $60/year</li>
+            <li>Priority model updates</li>
+            <li>Extended data retention</li>
+          </ul>
+          <button class="btn-gradient" style="width:100%;justify-content:center;padding:14px">Start Free Trial</button>
+        </div>
+
+        <p style="font-size:12px;color:var(--text-tertiary);text-align:center;margin-top:12px">Cancel anytime · Your data stays local · No card for trial</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:80px"></div>
+</body>
+</html>
