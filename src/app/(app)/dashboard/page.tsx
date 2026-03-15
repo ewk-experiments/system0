@@ -15,13 +15,13 @@ function StatCard({ icon: Icon, label, value, sub, color }: { icon: React.Elemen
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
               <Icon className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-slate-500">{label}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm text-slate-500">{label}</p>
               <p className="text-2xl font-bold text-slate-900">{value}</p>
-              <p className="font-mono text-xs text-slate-400">{sub}</p>
+              <p className="truncate font-mono text-xs text-slate-400">{sub}</p>
             </div>
           </div>
         </CardContent>
@@ -43,7 +43,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard icon={Brain} label="Cognitive Load" value={`${Math.round(cognitiveState.cognitiveLoad * 100)}%`} sub="Moderate" color="bg-indigo-600" />
         <StatCard icon={TrendingUp} label="Focus Score" value={`${cognitiveState.focusScore}`} sub="Excellent" color="bg-violet-600" />
         <StatCard icon={Zap} label="Current Mode" value={cognitiveState.currentMode} sub={`Active ${cognitiveState.activeFor}`} color="bg-emerald-600" />

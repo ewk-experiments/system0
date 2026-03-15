@@ -91,7 +91,7 @@ export default function CognitiveProfile() {
             <div className="space-y-3">
               {cognitiveProfile.topicDiversity.map((topic) => (
                 <div key={topic.topic} className="flex items-center gap-3">
-                  <span className="w-28 text-sm text-slate-600">{topic.topic}</span>
+                  <span className="w-20 shrink-0 text-xs text-slate-600 sm:w-28 sm:text-sm">{topic.topic}</span>
                   <div className="flex-1">
                     <div className="h-6 w-full overflow-hidden rounded-full bg-slate-100">
                       <motion.div
