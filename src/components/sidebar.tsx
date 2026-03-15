@@ -3,92 +3,66 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useApp } from "@/lib/context";
 import {
-  LayoutDashboard,
-  Brain,
-  Activity,
-  Settings,
-  Zap,
-  LogOut,
-  Menu,
-  X,
+  LayoutDashboard, Brain, Activity, Settings, Sparkles, LogOut, Menu, X, Play, Pause, Zap,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/profile", label: "Cognitive Profile", icon: Brain },
+  { href: "/perspective", label: "Perspective Shift", icon: Sparkles },
   { href: "/activity", label: "Activity Feed", icon: Activity },
+  { href: "/profile", label: "Cognitive Profile", icon: Brain },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { cognitiveState, simulationRunning, startSimulation, stopSimulation, logout } = useApp();
   const [open, setOpen] = useState(false);
 
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  useEffect(() => { setOpen(false); }, [pathname]);
 
-  // Close on escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, []);
+  const focusLabel = cognitiveState
+    ? cognitiveState.focus_score > 80 ? 'Deep Focus' : cognitiveState.focus_score > 50 ? 'Active' : 'Scattered'
+    : 'Initializing';
 
   return (
     <>
-      {/* Mobile hamburger button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm md:hidden"
-        aria-label="Open navigation"
+        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-s0-border bg-s0-surface md:hidden"
+        aria-label="Open nav"
       >
-        <Menu className="h-5 w-5 text-slate-700" />
+        <Menu className="h-5 w-5 text-s0-text-dim" />
       </button>
 
-      {/* Backdrop (mobile only) */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 md:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setOpen(false)} />}
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-64 border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out",
-          // Mobile: hidden by default, shown when open
-          open ? "translate-x-0" : "-translate-x-full",
-          // Desktop: always visible
-          "md:translate-x-0 md:z-40"
-        )}
-      >
+      <aside className={cn(
+        "fixed left-0 top-0 z-50 h-screen w-60 border-r border-s0-border bg-s0-surface transition-transform duration-200",
+        open ? "translate-x-0" : "-translate-x-full",
+        "md:translate-x-0 md:z-40"
+      )}>
         <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600">
-              <Zap className="h-4 w-4 text-white" />
+          {/* Logo */}
+          <div className="flex h-14 items-center gap-2.5 border-b border-s0-border px-5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-s0-cyan to-s0-purple">
+              <Zap className="h-3.5 w-3.5 text-s0-bg" />
             </div>
-            <span className="text-lg font-semibold text-slate-900">System 0</span>
-            <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-              Active
-            </span>
-            {/* Mobile close button */}
-            <button
-              onClick={() => setOpen(false)}
-              className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 md:hidden"
-              aria-label="Close navigation"
-            >
-              <X className="h-5 w-5" />
+            <span className="font-mono text-sm font-semibold tracking-tight text-s0-text">SYSTEM 0</span>
+            <div className="ml-auto flex h-5 items-center rounded-full bg-s0-emerald/10 px-2">
+              <div className="mr-1.5 h-1.5 w-1.5 rounded-full bg-s0-emerald animate-pulse-slow" />
+              <span className="font-mono text-[10px] text-s0-emerald">LIVE</span>
+            </div>
+            <button onClick={() => setOpen(false)} className="ml-1 md:hidden">
+              <X className="h-4 w-4 text-s0-text-dim" />
             </button>
           </div>
 
-          <nav className="flex-1 space-y-1 p-3">
+          {/* Nav */}
+          <nav className="flex-1 space-y-0.5 p-2.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -96,10 +70,10 @@ export function Sidebar() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all",
                     isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-s0-cyan/10 text-s0-cyan"
+                      : "text-s0-text-dim hover:bg-s0-surface2 hover:text-s0-text"
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
@@ -109,21 +83,46 @@ export function Sidebar() {
             })}
           </nav>
 
-          <div className="border-t border-slate-200 p-3">
-            <div className="mb-3 rounded-lg bg-slate-50 p-3">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-xs font-medium text-slate-700">Cognitive State</span>
-              </div>
-              <p className="mt-1 font-mono text-xs text-slate-500">Deep Work · 2h 14m</p>
-            </div>
-            <Link
-              href="/auth/signin"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          {/* Simulation control */}
+          <div className="border-t border-s0-border p-3">
+            <button
+              onClick={simulationRunning ? stopSimulation : startSimulation}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all",
+                simulationRunning
+                  ? "bg-s0-amber/10 text-s0-amber hover:bg-s0-amber/20"
+                  : "bg-s0-cyan/10 text-s0-cyan hover:bg-s0-cyan/20"
+              )}
             >
-              <LogOut className="h-4 w-4" />
+              {simulationRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+              {simulationRunning ? 'Pause Simulation' : 'Start Simulation'}
+            </button>
+          </div>
+
+          {/* Status footer */}
+          <div className="border-t border-s0-border p-3">
+            <div className="rounded-lg bg-s0-bg p-3">
+              <div className="flex items-center gap-2">
+                <div className={cn("h-2 w-2 rounded-full", cognitiveState && cognitiveState.focus_score > 80 ? "bg-s0-emerald" : cognitiveState && cognitiveState.focus_score > 50 ? "bg-s0-amber" : "bg-s0-red")} />
+                <span className="font-mono text-[11px] text-s0-text-dim">{focusLabel}</span>
+              </div>
+              {cognitiveState && (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="font-mono text-[10px] text-s0-text-muted">FOCUS</span>
+                    <p className="font-mono text-xs text-s0-text">{cognitiveState.focus_score}</p>
+                  </div>
+                  <div>
+                    <span className="font-mono text-[10px] text-s0-text-muted">LOAD</span>
+                    <p className="font-mono text-xs text-s0-text">{Math.round(cognitiveState.cognitive_load * 100)}%</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <button onClick={logout} className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-s0-text-muted hover:bg-s0-surface2 hover:text-s0-text-dim">
+              <LogOut className="h-3.5 w-3.5" />
               Sign Out
-            </Link>
+            </button>
           </div>
         </div>
       </aside>

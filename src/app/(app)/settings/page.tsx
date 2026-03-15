@@ -1,164 +1,164 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { useApp } from "@/lib/context";
+import type { Settings } from "@/lib/db";
+import { isGeminiReady } from "@/lib/gemini";
 
-function Slider({ label, value, onChange, min = 0, max = 100, unit = "" }: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; unit?: string }) {
+function Slider({ label, value, onChange, min = 0, max = 100, step = 1, unit = "", desc }: {
+  label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; unit?: string; desc?: string;
+}) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-medium text-slate-700">{label}</label>
-        <span className="font-mono text-sm text-slate-500">{value}{unit}</span>
+        <label className="font-mono text-xs text-s0-text">{label}</label>
+        <span className="font-mono text-xs text-s0-cyan">{Math.round(value * (max <= 1 ? 100 : 1))}{unit}</span>
       </div>
-      <input
-        type="range" min={min} max={max} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-indigo-600"
-      />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" />
+      {desc && <p className="font-mono text-[10px] text-s0-text-muted mt-1">{desc}</p>}
     </div>
   );
 }
 
-function Toggle({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ label, description, checked, onChange }: {
+  label: string; description: string; checked: boolean; onChange: (v: boolean) => void;
+}) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-s0-border last:border-0">
       <div>
-        <p className="text-sm font-medium text-slate-900">{label}</p>
-        <p className="text-xs text-slate-500">{description}</p>
+        <p className="font-mono text-xs text-s0-text">{label}</p>
+        <p className="font-mono text-[10px] text-s0-text-muted">{description}</p>
       </div>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-indigo-600" : "bg-slate-200"}`}
+        className={`relative h-5 w-9 rounded-full transition-colors ${checked ? "bg-s0-cyan" : "bg-s0-border"}`}
       >
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
+        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-s0-bg shadow transition-transform ${checked ? "translate-x-4" : "translate-x-0.5"}`} />
       </button>
     </div>
   );
 }
 
-const allDomains = ["AI/ML", "Engineering", "Design", "Business", "Science", "Philosophy", "Creative", "News", "Health", "Finance"];
+export default function SettingsPage() {
+  const { settings, updateSettings, setApiKey, user } = useApp();
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [focusStart, setFocusStart] = useState("22:00");
+  const [focusEnd, setFocusEnd] = useState("08:00");
+  const [blacklist, setBlacklist] = useState("");
+  const [whitelist, setWhitelist] = useState("");
 
-export default function Settings() {
-  const [friction, setFriction] = useState(65);
-  const [quietStart, setQuietStart] = useState("22:00");
-  const [quietEnd, setQuietEnd] = useState("08:00");
-  const [domains, setDomains] = useState(new Set(["AI/ML", "Engineering", "Design"]));
-  const [notifications, setNotifications] = useState({ browser: true, email: false, digest: true, friction: true });
+  useEffect(() => {
+    if (settings) {
+      try {
+        const fh = JSON.parse(settings.focus_hours);
+        if (fh[0]) { setFocusStart(fh[0].start); setFocusEnd(fh[0].end); }
+      } catch {}
+      setBlacklist(settings.blacklist);
+      setWhitelist(settings.whitelist);
+    }
+  }, [settings]);
 
-  const toggleDomain = (d: string) => {
-    const next = new Set(domains);
-    next.has(d) ? next.delete(d) : next.add(d);
-    setDomains(next);
-  };
+  if (!settings) return null;
+
+  const save = (updates: Partial<Settings>) => updateSettings(updates);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500">Configure how System 0 operates</p>
+        <h1 className="font-mono text-lg font-bold text-s0-text">Settings</h1>
+        <p className="font-mono text-xs text-s0-text-muted">Configure System 0's behavior</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Friction */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Friction Engine</CardTitle>
-            <CardDescription>How aggressively System 0 challenges your thinking</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Slider label="Friction Intensity" value={friction} onChange={setFriction} unit="%" />
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Gentle</span>
-              <span>Balanced</span>
-              <span>Aggressive</span>
-            </div>
-            <p className="text-xs text-slate-500">
-              At {friction}%, System 0 will introduce contrarian perspectives approximately {Math.round(friction / 10)} times per day.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Friction Engine */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5 space-y-5">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted">Friction Engine</h3>
+          <Slider label="Friction Level" value={settings.friction_level} onChange={(v) => save({ friction_level: v })} min={0} max={1} step={0.05} unit="%" desc={`At ${Math.round(settings.friction_level * 100)}%, ~${Math.round(settings.friction_level * 10)} interventions per day`} />
+          <Slider label="Novelty Threshold" value={settings.novelty_threshold} onChange={(v) => save({ novelty_threshold: v })} min={0} max={1} step={0.05} unit="%" desc="Below this, System 0 pushes new content" />
+          <Slider label="Echo Chamber Threshold" value={settings.echo_threshold} onChange={(v) => save({ echo_threshold: v })} min={0} max={1} step={0.05} unit="%" desc="Above this, System 0 injects contrarian views" />
+        </div>
 
-        {/* Domains */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Monitored Domains</CardTitle>
-            <CardDescription>Topics System 0 actively tracks and reshapes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {allDomains.map((d) => (
-                <button
-                  key={d}
-                  onClick={() => toggleDomain(d)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                    domains.has(d) ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-500 hover:border-slate-300"
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Intervention Types */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-3">Intervention Types</h3>
+          <Toggle label="Contrarian Perspectives" description="Challenge one-sided thinking with opposing views" checked={settings.enable_contrarian} onChange={(v) => save({ enable_contrarian: v })} />
+          <Toggle label="Novelty Injection" description="Surface unfamiliar content when novelty is low" checked={settings.enable_novelty} onChange={(v) => save({ enable_novelty: v })} />
+          <Toggle label="Noise Reduction" description="Suppress distractions during high cognitive load" checked={settings.enable_noise_reduction} onChange={(v) => save({ enable_noise_reduction: v })} />
+          <Toggle label="Complexity Scaling" description="Increase content depth during flow states" checked={settings.enable_complexity} onChange={(v) => save({ enable_complexity: v })} />
+          <Toggle label="Topic Diversity" description="Broaden your information diet when too narrow" checked={settings.enable_diversity} onChange={(v) => save({ enable_diversity: v })} />
+        </div>
 
-        {/* Quiet Hours */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quiet Hours</CardTitle>
-            <CardDescription>System 0 reduces all interventions during these hours</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div>
-                <label className="mb-1 block text-xs text-slate-500">Start</label>
-                <input
-                  type="time" value={quietStart} onChange={(e) => setQuietStart(e.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm"
-                />
-              </div>
-              <span className="mt-5 text-slate-400">→</span>
-              <div>
-                <label className="mb-1 block text-xs text-slate-500">End</label>
-                <input
-                  type="time" value={quietEnd} onChange={(e) => setQuietEnd(e.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm"
-                />
-              </div>
+        {/* Focus Hours */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-3">Quiet Hours</h3>
+          <p className="font-mono text-[10px] text-s0-text-muted mb-3">System 0 reduces interventions during these hours</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <label className="font-mono text-[10px] text-s0-text-muted block mb-1">Start</label>
+              <input type="time" value={focusStart} onChange={(e) => { setFocusStart(e.target.value); save({ focus_hours: JSON.stringify([{ start: e.target.value, end: focusEnd }]) }); }}
+                className="rounded-lg border border-s0-border bg-s0-bg px-3 py-2 font-mono text-xs text-s0-text" />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Choose how System 0 communicates with you</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Toggle label="Browser notifications" description="Real-time alerts for high-impact events" checked={notifications.browser} onChange={(v) => setNotifications({ ...notifications, browser: v })} />
-            <Toggle label="Email digest" description="Daily summary of interventions" checked={notifications.email} onChange={(v) => setNotifications({ ...notifications, email: v })} />
-            <Toggle label="Weekly cognitive digest" description="Weekly report of thinking patterns" checked={notifications.digest} onChange={(v) => setNotifications({ ...notifications, digest: v })} />
-            <Toggle label="Friction notifications" description="Alert when contrarian content is surfaced" checked={notifications.friction} onChange={(v) => setNotifications({ ...notifications, friction: v })} />
-          </CardContent>
-        </Card>
-
-        {/* Data & Account */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Data & Account</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="outline">Export Cognitive Data</Button>
-              <Button variant="outline">Download Activity Log</Button>
-              <Button variant="outline" className="text-red-600 hover:bg-red-50 hover:text-red-700">Delete Account</Button>
+            <span className="mt-4 text-s0-text-muted">→</span>
+            <div>
+              <label className="font-mono text-[10px] text-s0-text-muted block mb-1">End</label>
+              <input type="time" value={focusEnd} onChange={(e) => { setFocusEnd(e.target.value); save({ focus_hours: JSON.stringify([{ start: focusStart, end: e.target.value }]) }); }}
+                className="rounded-lg border border-s0-border bg-s0-bg px-3 py-2 font-mono text-xs text-s0-text" />
             </div>
-            <p className="mt-4 text-xs text-slate-400">
-              Data exports include all cognitive state history, intervention logs, and profile data in JSON format.
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {/* Domain Filters */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5 space-y-4">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted">Domain Filters</h3>
+          <div>
+            <label className="font-mono text-[10px] text-s0-text-muted block mb-1">Blacklist (comma-separated)</label>
+            <input value={blacklist} onChange={(e) => { setBlacklist(e.target.value); save({ blacklist: e.target.value }); }}
+              placeholder="facebook.com, tiktok.com" className="w-full rounded-lg border border-s0-border bg-s0-bg px-3 py-2 font-mono text-xs text-s0-text placeholder:text-s0-text-muted focus:border-s0-cyan focus:outline-none" />
+          </div>
+          <div>
+            <label className="font-mono text-[10px] text-s0-text-muted block mb-1">Whitelist (comma-separated)</label>
+            <input value={whitelist} onChange={(e) => { setWhitelist(e.target.value); save({ whitelist: e.target.value }); }}
+              placeholder="arxiv.org, nature.com" className="w-full rounded-lg border border-s0-border bg-s0-bg px-3 py-2 font-mono text-xs text-s0-text placeholder:text-s0-text-muted focus:border-s0-cyan focus:outline-none" />
+          </div>
+        </div>
+
+        {/* API Key */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5 lg:col-span-2">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-3">Gemini API</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`h-2 w-2 rounded-full ${isGeminiReady() ? 'bg-s0-emerald' : 'bg-s0-red'}`} />
+            <span className="font-mono text-xs text-s0-text-dim">{isGeminiReady() ? 'Connected' : 'Not connected'}</span>
+          </div>
+          <div className="flex gap-2">
+            <input type="password" value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)}
+              placeholder="Enter Gemini API key..." className="flex-1 rounded-lg border border-s0-border bg-s0-bg px-3 py-2 font-mono text-xs text-s0-text placeholder:text-s0-text-muted focus:border-s0-cyan focus:outline-none" />
+            <button onClick={() => { setApiKey(apiKeyInput); setApiKeyInput(''); }} className="rounded-lg bg-s0-cyan/10 px-4 py-2 font-mono text-xs text-s0-cyan hover:bg-s0-cyan/20">
+              Save
+            </button>
+          </div>
+          <p className="font-mono text-[10px] text-s0-text-muted mt-2">
+            Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" className="text-s0-cyan hover:underline">aistudio.google.com/apikey</a>. Used for Perspective Shift analysis.
+          </p>
+        </div>
+
+        {/* Data */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5 lg:col-span-2">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-3">Data</h3>
+          <div className="flex gap-3">
+            <button onClick={() => {
+              const data = JSON.stringify({ cognitive_states: localStorage.getItem('s0_cognitive_states'), interventions: localStorage.getItem('s0_interventions'), browsing_data: localStorage.getItem('s0_browsing_data') });
+              const blob = new Blob([data], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = 'system0-export.json'; a.click();
+            }} className="rounded-lg border border-s0-border px-3 py-2 font-mono text-xs text-s0-text-dim hover:border-s0-cyan/30 hover:text-s0-text transition-colors">
+              Export Data
+            </button>
+            <button onClick={() => { if (confirm('Clear all System 0 data?')) { localStorage.clear(); window.location.reload(); } }}
+              className="rounded-lg border border-s0-red/30 px-3 py-2 font-mono text-xs text-s0-red/70 hover:bg-s0-red/5 hover:text-s0-red transition-colors">
+              Clear All Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

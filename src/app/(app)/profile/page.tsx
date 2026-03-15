@@ -1,113 +1,146 @@
 "use client";
 
+import { useApp } from "@/lib/context";
+import { db } from "@/lib/db";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cognitiveProfile } from "@/lib/mock-data";
 import {
-  BarChart, Bar, AreaChart, Area, LineChart, Line,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import { useMemo } from "react";
 
 export default function CognitiveProfile() {
+  const { user, interventions, tick } = useApp();
+
+  const states = useMemo(() => {
+    if (!user) return [];
+    return db.getCognitiveStates(user.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, tick]);
+
+  const domainStats = useMemo(() => {
+    if (!user) return [];
+    return db.getDomainStats(user.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, tick]);
+
+  // Aggregate states into hourly bins
+  const hourlyData = useMemo(() => {
+    const bins = Array.from({ length: 24 }, (_, h) => ({ hour: h, focus: 0, load: 0, count: 0 }));
+    for (const s of states) {
+      const h = new Date(s.timestamp).getHours();
+      bins[h].focus += s.focus_score;
+      bins[h].load += s.cognitive_load * 100;
+      bins[h].count++;
+    }
+    return bins.map(b => ({ hour: `${b.hour}:00`, focus: b.count ? Math.round(b.focus / b.count) : 0, load: b.count ? Math.round(b.load / b.count) : 0 }));
+  }, [states]);
+
+  // Intervention type breakdown
+  const typeBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const iv of interventions) {
+      counts[iv.type] = (counts[iv.type] || 0) + 1;
+    }
+    return Object.entries(counts).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
+  }, [interventions]);
+
+  // Rating stats
+  const ratingStats = useMemo(() => {
+    const rated = interventions.filter(iv => iv.user_rating !== null);
+    const helpful = rated.filter(iv => iv.user_rating === 1).length;
+    const unhelpful = rated.filter(iv => iv.user_rating === -1).length;
+    return { total: interventions.length, rated: rated.length, helpful, unhelpful, rate: rated.length ? Math.round(helpful / rated.length * 100) : 0 };
+  }, [interventions]);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Cognitive Profile</h1>
-        <p className="text-sm text-slate-500">Your thinking patterns over time</p>
+        <h1 className="font-mono text-lg font-bold text-s0-text">Cognitive Profile</h1>
+        <p className="font-mono text-xs text-s0-text-muted">Your thinking patterns and System 0 effectiveness</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Weekly Focus */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Focus Hours</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={cognitiveProfile.weeklyFocus}>
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} unit="h" />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="deep" name="Deep Work" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="shallow" name="Shallow Work" fill="#c4b5fd" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Stats row */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: 'Total Interventions', value: ratingStats.total, color: 'text-s0-cyan' },
+          { label: 'Rated Helpful', value: `${ratingStats.helpful}`, color: 'text-s0-emerald' },
+          { label: 'Approval Rate', value: `${ratingStats.rate}%`, color: 'text-s0-purple' },
+          { label: 'Data Points', value: states.length, color: 'text-s0-amber' },
+        ].map(s => (
+          <div key={s.label} className="rounded-xl border border-s0-border bg-s0-surface p-4">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-s0-text-muted">{s.label}</span>
+            <p className={`font-mono text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
 
-        {/* Thinking Ratio */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Convergent vs Divergent Thinking</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={cognitiveProfile.thinkingRatio}>
-                <defs>
-                  <linearGradient id="convGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="divGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} unit="%" />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Area type="monotone" dataKey="convergent" stroke="#6366f1" fill="url(#convGrad)" strokeWidth={2} name="Convergent" />
-                <Area type="monotone" dataKey="divergent" stroke="#8b5cf6" fill="url(#divGrad)" strokeWidth={2} name="Divergent" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Focus by Hour */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-4">Avg Focus & Load by Hour</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={hourlyData}>
+              <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#4a5c7a' }} tickLine={false} axisLine={false} interval={3} />
+              <YAxis tick={{ fontSize: 9, fill: '#4a5c7a' }} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ background: '#131a2e', border: '1px solid #1e2a45', borderRadius: 8, fontSize: 11, color: '#e2e8f0' }} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="focus" name="Focus" fill="#22d3ee" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="load" name="Load" fill="#a78bfa" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-        {/* Productivity by Hour */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Productivity by Hour of Day</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={cognitiveProfile.productivityByHour}>
-                <XAxis dataKey="hour" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                <Line type="monotone" dataKey="productivity" stroke="#6366f1" strokeWidth={2} dot={false} name="Productivity" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Topic Diversity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Topic Diversity — This Month</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Intervention Types */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-4">Intervention Breakdown</h3>
+          {typeBreakdown.length > 0 ? (
             <div className="space-y-3">
-              {cognitiveProfile.topicDiversity.map((topic) => (
-                <div key={topic.topic} className="flex items-center gap-3">
-                  <span className="w-20 shrink-0 text-xs text-slate-600 sm:w-28 sm:text-sm">{topic.topic}</span>
-                  <div className="flex-1">
-                    <div className="h-6 w-full overflow-hidden rounded-full bg-slate-100">
+              {typeBreakdown.map(t => {
+                const maxCount = typeBreakdown[0].count;
+                const pct = (t.count / maxCount) * 100;
+                return (
+                  <div key={t.type}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-[11px] text-s0-text-dim">{t.type}</span>
+                      <span className="font-mono text-[10px] text-s0-text-muted">{t.count}</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-s0-border">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                        className="h-full rounded-full bg-gradient-to-r from-s0-cyan to-s0-purple"
                         initial={{ width: 0 }}
-                        animate={{ width: `${topic.percentage}%` }}
-                        transition={{ duration: 0.8, delay: 0.1 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.6 }}
                       />
                     </div>
                   </div>
-                  <span className="w-16 text-right font-mono text-xs text-slate-400">{topic.hours}h ({topic.percentage}%)</span>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center font-mono text-xs text-s0-text-muted py-10">No data yet</p>
+          )}
+        </div>
+
+        {/* Domain Usage */}
+        <div className="rounded-xl border border-s0-border bg-s0-surface p-5 lg:col-span-2">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-s0-text-muted mb-4">Domain Usage</h3>
+          {domainStats.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+              {domainStats.slice(0, 12).map(d => (
+                <div key={d.domain} className="rounded-lg border border-s0-border bg-s0-bg p-3">
+                  <p className="font-mono text-[11px] text-s0-text truncate">{d.domain}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="font-mono text-[10px] text-s0-cyan">{Math.round(d.totalTime / 60)}m</span>
+                    <span className="font-mono text-[10px] text-s0-text-muted">{d.visits} visits</span>
+                    <span className="font-mono text-[10px] text-s0-text-muted">{Math.round(d.avgScroll * 100)}% scroll</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <p className="text-center font-mono text-xs text-s0-text-muted py-6">No browsing data</p>
+          )}
+        </div>
       </div>
     </div>
   );
